@@ -1,0 +1,37 @@
+services:
+    ray-head:
+        image: ray
+        container_name: ray-head
+        ports:
+            - 8625:8625
+            - 6379:6379
+            - 10001:10001
+            - 8000:8000
+        networks:
+            - ray_net
+        volumes:
+            - ./wat.py:/wat.py
+            - ./config.yaml:/config.yaml
+        command: bash -c "ray start --head --dashboard-port=8625 --port=6379 --dashboard-host=0.0.0.0 --redis-password=abc123456 --block"
+        stop_grace_period: 2s
+
+    ray-worker:
+        image: ray
+        container_name: ray-worker
+        networks:
+            - ray_net
+        command: bash -c "ray start --address=ray-head:6379 --redis-password=abc123456 --block"
+        volumes:
+            - /mnt/ml/llm-models:/models
+            - ./wat.py:/wat.py
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          capabilities: [gpu]
+                          device_ids: ['0', '1']
+
+networks:
+    ray_net:
+

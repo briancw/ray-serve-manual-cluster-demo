@@ -1,0 +1,6 @@
+services:
+    ray:
+        image: ray
+        build:
+            dockerfile: RayDockerfile
+            context: .

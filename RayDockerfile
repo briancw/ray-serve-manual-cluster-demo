@@ -1,0 +1,32 @@
+###
+# Dockerfile for running a Ray worker image with GPU acceleration
+###
+
+ARG CUDA_IMAGE="12.1.1-devel-ubuntu22.04"
+FROM nvidia/cuda:${CUDA_IMAGE}
+
+# Hide some banner stuff
+RUN rm /opt/nvidia/entrypoint.d/15-container-copyright.txt
+RUN rm /opt/nvidia/entrypoint.d/30-container-license.txt
+RUN rm /opt/nvidia/entrypoint.d/10-banner.sh
+RUN rm /opt/nvidia/entrypoint.d/12-banner.sh
+
+# Baseline Update and tools
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y curl git build-essential
+
+# Install Python
+RUN apt-get install -y python3 python3-pip python3-venv
+
+# Python Deps
+RUN pip3 install -U pip setuptools --no-cache-dir
+
+# Install llama-cpp-python
+ENV CUDA_DOCKER_ARCH=all
+ENV LLAMA_CUBLAS=1
+ENV FORCE_CMAKE=1
+ENV CMAKE_ARGS="-DLLAMA_CUBLAS=1"
+#RUN pip install llama-cpp-python[server] --no-cache-dir
+RUN pip3 install llama-cpp-python --no-cache-dir --index-url=http://10.0.1.71:5000/index --trusted-host=10.0.1.71
+RUN pip3 install ray --no-cache-dir --index-url=http://10.0.1.71:5000/index --trusted-host=10.0.1.71
+RUN pip3 install ray[serve] --no-cache-dir --index-url=http://10.0.1.71:5000/index --trusted-host=10.0.1.71
